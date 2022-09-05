@@ -115,7 +115,7 @@ contract Prediction is Ownable, Pausable, ReentrancyGuard {
 
     modifier notContract() {
         require(!_isContract(msg.sender), "Contract not allowed");
-        require(msg.sender == tx.origin, "Proxy contract not allowed");
+        //require(msg.sender == tx.origin, "Proxy contract not allowed");
         _;
     }
 
@@ -187,7 +187,7 @@ contract Prediction is Ownable, Pausable, ReentrancyGuard {
         uint256 reward; // Initialise reward
 
         for (uint256 i=0; i < epochs.length; i++){
-            require(rounds[epochs[i]].startTimestamp != 0, "Round hasnot started");
+            require(rounds[epochs[i]].startTimestamp != 0, "Round has not started");
             require(block.timestamp > rounds[epochs[i]].closeTimestamp, "Round has not ended");
 
             uint256 addedReward = 0;
@@ -209,7 +209,12 @@ contract Prediction is Ownable, Pausable, ReentrancyGuard {
         }
 
         if (reward > 0){
-            //ADD TRANSFER OF ETH HERE
+            uint256 amt = reward;
+            reward = 0;
+            
+            (bool sent, bytes memory data) = msg.sender.call{value: amt}("");
+            require(sent, "Failed to send claimed eth");
+            amt = 0;
         }
     }
 
@@ -264,7 +269,10 @@ contract Prediction is Ownable, Pausable, ReentrancyGuard {
         uint256 currentFeeAmount = feeAmount;
         feeAmount = 0;
         //ADD TRANSFER OF ETH HERE
+        (bool sent, bytes memory data) = msg.sender.call{value: currentFeeAmount}("");
+        require(sent, "Failed to send claimed eth");
         emit FeeClaim(currentFeeAmount);
+        currentFeeAmount = 0;
     }
 
     function unpause() external whenPaused onlyAdminOrOperatorOrKeeper{

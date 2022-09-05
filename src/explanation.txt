@@ -1,0 +1,28 @@
+Prediction Keeper:
+    1) if the prediction is paused, unpause it
+    2) if the prediction hasnt run the genesis round, genesisStartRound
+    3) if the prediction has started once but hasnt locked once:
+            if its too early, do nothing
+            if its too late, pause
+            else run genesisLockRound
+    4) if the prediction has started once, and has locked once:
+            if its too early, do nothing
+            if its too late, pause
+            else run executeround
+
+Prediction:
+    Execute Round:
+        requires that the prediction has started and locked once
+
+        set currentRoundId to the id from the oracle
+        set currentPrice(*SHOULD BE RATE*) to rate from oracle
+
+        set oracleLatestRoundId to currentRoundId
+
+        1) lock the current round with the current round id and the current rate
+        2) end the last round with current round id and the current rate
+        3) calculate the rewards for the last round
+        4) set the current epoch to currentEpoch + 1
+        5) start the new round
+
+        
