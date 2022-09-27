@@ -9,10 +9,12 @@ contract InflationFeed is ChainlinkClient, ConfirmedOwner {
   using Chainlink for Chainlink.Request;
   
   address public oracleId;
+  address public keeperAddress;
   string public jobId;
   uint256 public fee;
   int256 public inflationWei;
   uint80 public roundId;
+
 
   // Please refer to
   // https://github.com/truflation/quickstart/blob/main/network.md
@@ -21,16 +23,22 @@ contract InflationFeed is ChainlinkClient, ConfirmedOwner {
   constructor(
     address oracleId_,
     string memory jobId_,
-    uint256 fee_
+    uint256 fee_,
+    address link_
   ) ConfirmedOwner(msg.sender) {
-    setPublicChainlinkToken();
+    setChainlinkToken(link_);
     oracleId = oracleId_;
     jobId = jobId_;
     fee = fee_;
   }
 
+  modifier onlyOwnerOrKeeper(){
+        require(msg.sender == owner() || msg.sender == keeperAddress);
+        _;
+    }
+
         
-  function requestInflationWei() public returns (bytes32 requestId) {
+  function requestInflationWei() public onlyOwnerOrKeeper returns (bytes32 requestId){
     Chainlink.Request memory req = buildChainlinkRequest(
       bytes32(bytes(jobId)),
       address(this),
@@ -82,5 +90,10 @@ contract InflationFeed is ChainlinkClient, ConfirmedOwner {
         _timestamp = block.timestamp;
         return (_roundId, _inflationWei, _timestamp);
   }
+
+  function setKeeperAddress(address keeperAddress_) public onlyOwnerOrKeeper{
+        require(keeperAddress_ != address(0));
+        keeperAddress = keeperAddress_;
+    }
 
 }

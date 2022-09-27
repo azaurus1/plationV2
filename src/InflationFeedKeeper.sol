@@ -10,12 +10,6 @@ import "./interfaces/IInflationFeed.sol";
 contract InflationFeedKeeper is  Ownable, Pausable {
 
     InflationFeedInterface public feed;
-    address public keeperAddress;
-
-    modifier onlyOwnerOrKeeper(){
-        require(msg.sender == owner() || msg.sender == keeperAddress);
-        _;
-    }
 
     constructor(address _feed) public{
         feed = InflationFeedInterface(_feed);
@@ -25,9 +19,6 @@ contract InflationFeedKeeper is  Ownable, Pausable {
         feed.requestInflationWei();
     }
 
-    function setKeeperAddress(address keeperAddress_) public{
-        require(keeperAddress_ != address(0));
-        keeperAddress = keeperAddress_;
-    }
+    
 
 }
