@@ -25,7 +25,7 @@ contract InflationFeedKeeper is  Ownable, Pausable {
         feed.requestInflationWei();
     }
 
-    function setKeeperAddress(address keeperAddress_) public onlyOwnerOrKeeper{
+    function setKeeperAddress(address keeperAddress_) public{
         require(keeperAddress_ != address(0));
         keeperAddress = keeperAddress_;
     }
