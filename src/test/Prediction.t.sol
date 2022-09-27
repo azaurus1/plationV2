@@ -107,7 +107,7 @@ contract PredictionTest is DSTest {
         vm.stopPrank();
         assertTrue(prediction.paused());
     }
-    function testEndToEnd() public {
+    function testEndToEndOver() public {
         vm.startPrank(prediction.operatorAddress());
         
         //Set Inflation Feed at 9.007%
@@ -278,9 +278,185 @@ contract PredictionTest is DSTest {
         vm.startPrank(betsOver);
 
         //claim winning as betsOver
-        console.log("Before Claim: ",address(betsOver).balance);
+        console.log("betsOver: Before Claim: ",address(betsOver).balance);
         prediction.claim(tempEpoch);
-        console.log("After Claim: ",address(betsOver).balance);
+        console.log("betsOver: After Claim: ",address(betsOver).balance);
+
+    }
+    function testEndToEndUnder() public {
+        vm.startPrank(prediction.operatorAddress());
+        
+        //Set Inflation Feed at 9.007%
+        inflationFeedHelper.setinflationWei(9007440898766211072);
+        console.log("Starting Rate: ",uint(inflationFeedHelper.inflationWei()));
+        
+        // Genesis Start Round
+        console.log(" ");
+        console.log("Genesis Round starting");
+        prediction.genesisStartRound();
+        console.log("Genesis Start Once: ", prediction.genesisStartOnce());
+        console.log("Oracle Round ID: ", prediction.oracleLatestRoundId());
+        console.log(" ");
+
+        // Increment Oracle ID and Inflation rate
+        //Set inflation feed at 9.107%
+        console.log(" ");
+        console.log("Simulating Oracle Run");
+        console.log("Start Round ID: ", inflationFeedHelper.roundId());
+        console.log("Start Rate: ",uint(inflationFeedHelper.inflationWei()));
+        inflationFeedHelper.setinflationWei(9407440898766211072);
+        inflationFeedHelper.incrementRoundID();
+        console.log("New Round ID: ", inflationFeedHelper.roundId());
+        console.log("Locking Rate: ",uint(inflationFeedHelper.inflationWei()));
+        console.log(" ");
+
+        // Warp by IntervalSeconds
+        console.log(" ");
+        console.log("Warping time forward by interval seconds");
+        console.log("Before warp: ",block.timestamp);
+        vm.warp(block.timestamp + prediction.intervalSeconds());
+        console.log("After warp: ",block.timestamp);
+        console.log(" ");
+
+        // Genesis Lock Round
+        // this will set the lockRate for round 1
+        console.log(" ");
+        console.log("Locking the prediction");
+        prediction.genesisLockRound();
+        console.log("Genesis Lock Once:", prediction.genesisLockOnce());
+        console.log(" ");
+
+        // Warp again by IntervalSeconds
+        console.log(" ");
+        console.log("Warping time forward by interval seconds");
+        console.log("Before warp: ",block.timestamp);
+        vm.warp(block.timestamp + prediction.intervalSeconds());
+        console.log("After warp: ",block.timestamp);
+        console.log(" ");
+
+        // Increment Oracle ID and Inflation rate
+        // Set inflation feed at 9.2%
+        // this will set the closeRate for round 1 and lockRate for round 2
+        console.log(" ");
+        console.log("Simulating Oracle Run");
+        console.log("Start Round ID: ", inflationFeedHelper.roundId());
+        console.log("Start Rate: ",uint(inflationFeedHelper.inflationWei()));
+        inflationFeedHelper.setinflationWei(9307440898766211072);
+        inflationFeedHelper.incrementRoundID();
+        console.log("New Round ID: ", inflationFeedHelper.roundId());
+        console.log("Closing Rate: ",uint(inflationFeedHelper.inflationWei()));
+        console.log(" ");
+        
+        // Prediction Execute Round
+        // this will end the first epoch and also lock round 2
+        prediction.executeRound();
+
+        vm.stopPrank();
+
+        // Warp again by 2 hours
+        console.log(" ");
+        console.log("Warping time forward by 2 hours");
+        console.log("Before warp: ",block.timestamp);
+        vm.warp(block.timestamp + 7200);
+        console.log("After warp: ",block.timestamp);
+        console.log(" ");
+        
+        // hand out test eth
+        vm.deal(betsOver, 10 ether);
+        vm.deal(betsUnder, 10 ether);
+
+        // betsOver bets... over       
+        vm.startPrank(betsOver);
+        prediction.betOver{value:1000000000000000000}(3);
+        vm.stopPrank();
+
+        // betsUnder bets under
+        vm.startPrank(betsUnder);
+        prediction.betUnder{value:1000000000000000000}(3);
+        vm.stopPrank();
+
+        // go back to pranking
+        vm.startPrank(prediction.operatorAddress());
+
+        // Warp again by IntervalSeconds
+        console.log(" ");
+        console.log("Warping time forward by interval seconds");
+        console.log("Before warp: ",block.timestamp);
+        vm.warp(block.timestamp + (prediction.intervalSeconds())-7200);
+        console.log("After warp: ",block.timestamp);
+        console.log(" ");
+
+        // Increment Oracle ID and Inflation rate
+        // Set inflation feed at 9.3%
+        // this will set the close rate for round 2 and lockrate for round 3 
+        console.log(" ");
+        console.log("Simulating Oracle Run");
+        console.log("Start Round ID: ", inflationFeedHelper.roundId());
+        console.log("Start Rate: ",uint(inflationFeedHelper.inflationWei()));
+        inflationFeedHelper.setinflationWei(9207440898766211072);
+        inflationFeedHelper.incrementRoundID();
+        console.log("New Round ID: ", inflationFeedHelper.roundId());
+        console.log("Closing Rate: ",uint(inflationFeedHelper.inflationWei()));
+        console.log(" ");
+
+        // execute another round
+        // this will end the second round and then lock round 3
+        prediction.executeRound();
+
+        // Warp again by IntervalSeconds
+        console.log(" ");
+        console.log("Warping time forward by interval seconds");
+        console.log("Before warp: ",block.timestamp);
+        vm.warp(block.timestamp + prediction.intervalSeconds());
+        console.log("After warp: ",block.timestamp);
+        console.log(" ");
+
+        // Increment Oracle ID and Inflation rate
+        // Set inflation feed at 9.4%
+        // this will set the close rate for round 2 and lockrate for round 3 
+        console.log(" ");
+        console.log("Simulating Oracle Run");
+        console.log("Start Round ID: ", inflationFeedHelper.roundId());
+        console.log("Start Rate: ",uint(inflationFeedHelper.inflationWei()));
+        inflationFeedHelper.setinflationWei(9107440898766211072);
+        inflationFeedHelper.incrementRoundID();
+        console.log("New Round ID: ", inflationFeedHelper.roundId());
+        console.log("Closing Rate: ",uint(inflationFeedHelper.inflationWei()));
+        console.log(" ");
+
+        // execute another round
+        // this will end round 3 and then lock round 4
+        prediction.executeRound();
+        
+        // change to the admin address
+        vm.stopPrank();
+        vm.startPrank(prediction.adminAddress());
+        
+
+        // Set the Admin address balance to 0
+        vm.deal(prediction.adminAddress(),0 ether);
+
+        // Print balance before and after claiming the fees
+        console.log("Before Fee Claim: ",(prediction.adminAddress()).balance);
+        prediction.claimFee();
+        console.log("After Fee Claim: ",(prediction.adminAddress()).balance);
+
+        // Warp again by 5 min
+        console.log(" ");
+        console.log("Warping time forward by interval seconds");
+        console.log("Before warp: ",block.timestamp);
+        vm.warp(block.timestamp + 300);
+        console.log("After warp: ",block.timestamp);
+        console.log(" ");
+
+        // change to the winner address (betsOver)
+        vm.stopPrank();
+        vm.startPrank(betsUnder);
+
+        //claim winning as betsUnder
+        console.log("betsUnder: Before Claim: ",address(betsUnder).balance);
+        prediction.claim(tempEpoch);
+        console.log("betsUnder: After Claim: ",address(betsUnder).balance);
 
     }
     
